@@ -23,7 +23,7 @@ fig_align: "center"
 ---
 
 ```{r setup, include = FALSE, eval = TRUE}
-knitr::opts_chunk$set(echo = FALSE, eval = TRUE, fig.height = 3)
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, fig.height = 4)
 
 # Se cargan las librerias a utilizar
 library(tidyverse)
@@ -40,26 +40,130 @@ Lee el artículo de Tapia, José A. y Nieto, F. Javier. **Razón de posibilidade
 # Ejercicio 2
 ¿Qué es la sensibilidad (*sensitivity*) y la especificidad (*specificity*) de una prueba? ¿Qué es la curva ROC? Busca algún ejemplo para ejemplificar estos conceptos.
 
+Para estos dos casos, consideremos la siguiente tabla:
+\begin{table}[H]
+\centering
+\begin{tabular}{l|l|l}
+\diagbox{Prueba}{Realidad} & Positivo & Negativo \\
+\toprule
+Positivo & Verdadero positivo (TP) & Falso Positivo (FP) \\
+\midrule
+Negativo & Falso Negativo (FN) & Verdadero negativo (TN)
+\end{tabular}
+\end{table}
+
+La **sensibilidad** de una prueba hacer referencia a la capacidad de la prueba para detectar "pacientes" que efectivamente tienen cierta condición (la prueba da positivo). Esto es, es el cociente que existe entre el número de verdaderos positivos dados por la prueba entre el total de pacientes que tienen la condición:
+\begin{align*}
+\mathrm{sensibilidad} &= \dfrac{TP}{TP + FN}
+\end{align*}
+En el caso de una prueba con una alta sensibilidad, se puede afirmar que un resultado negativo es útil para descartar la presencia de la condición (enfermedad). Sin embargo, un resultado positivo, en el caso de una prueba con alta sensibilidad, no se puede usar para confirmar (asegurar) que el paciente padece cierta condición.
+
+La **especificidad** de una prueba hacer referencia a la capacidad de la prueba a detectar de forma correcta "pacientes"" carecen de cierta condición (la prueba da negativo). Esto es, es el cociente que existe entre entre los verdaderos negativos dados por la prueba entre el total de pacientes que efectivamente carecen de la condición en cuestión:
+\begin{align*}
+\mathrm{especificidad} &= \dfrac{TN}{TN + FP}
+\end{align*}
+En el caso de una prueba con alta especificidad, se puede afirmar que un resultado positivo es útil para confirmar la precencia del padecimiento de cierta condición (enfermedad). Mientras que, para un resultado negativo, en el caso de una pruba con alta especificidad, no se puede usar para confirmar que el paciente carece de cierto padecimiento.
+
+La **curva ROC** es una representación gráfica de la sensibilidad respecto a la especificidad cuando se trabaja en pruebas de clasificación binaria (tiene el pedecimiento, carece del padecimiento). En el eje $X$ se coloca el valor de $1 - sensibilidad$ y en el eje $Y$ se coloca el valor de la especificidad. En el caso de la "prueba ideal" se tendría un valor de sensibilidad igual a 1 y un valor especificidad igual a 1, por lo que dicha prueba se colocaría en la coordenada $(1 - sensibilidad, especificidad) = (0, 1)$.
+
+```{r}
+datos <- tibble(sensibilidad = c(0.75, 0.25),
+         especificidad = c(0.75, 0.25),
+         etiqueta = c("Mejor", "Peor"))
+
+tibble(sensibilidad = c(1, 0.75, 0.25, 0.75, 0.4, 0.7),
+       especificidad = c(1, 0.75, 0.25, 0.5, 0.8, 0.2),
+       etiqueta = c("Prueba\nperfecta", "Mejor", "Peor", "A", "B", "C")) %>% 
+  ggplot(aes(x = 1 - sensibilidad, y = especificidad, label = etiqueta)) +
+  geom_point() +
+  geom_text(position = position_nudge(x = 0.05, y = -0.1)) +
+  geom_abline(intercept = 0, slope = 1, color = "firebrick", linetype = 2, size = 1) +
+  coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+  geom_segment(data = datos, aes(x = 0.5, y = 0.5,
+                  xend = 1 - sensibilidad, yend = especificidad),
+               size = 0.5, arrow = arrow(length = unit(0.5, "cm"))) +
+  labs(title = "Curva ROC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+La gráfica anterior representa la posición de tres pruebas *prueba perfecta*, *prueba A* y *prueba B*. La prueba perfecta es, como se mencionó previamente, es aquella que tiene especificidad y sensibilidad igual a 1. La prueba A tiene una sensibilidad mayor respecto a la prueba B, pero tiene una especificidad menor que la prueba B. La prueba C no tiene un buen desempeño al tener el valor de 1 - sensibilidad y la especificidad por abajo de la recta puntada (el área "peor"), implica que su desempeño es peor que el de "adivinar" lanzando una moneda para determinar el resultado.
+
+La gráfica anterior permite determinar de una forma visual la comparación entre el desempeño entre distintas pruebas. Por ejemplo, si nos interesa una prueba con alta sensibilidad, se tomaría la prueba A. Mientras que si serequiere una prueba con alta especificidad se elegirá la prueba B.
+
+El nombre de "curva" proviene de la determinación sobre el comportamiento de cada una de las pruebas para distintos "puntos de corte". Esto es, al determinar una prueba es normal obtener como resultado un valor numérico entre 0 y 1 que indica la "probabilidad de padecer" cierta condición. En este caso, se determina un valor de probabilidad a partir del cual si el resultado de la prueba es mayor a este valor se considerará un resultado positivo y si el resultado de la prueba es menor a este valor se considerará un resultado negativo.
+
+La selección de dicho punto de corte conlleva a que la tabla de contingencia se vea modificada al cambiar los valores de verdaderos positivo (TP), falsos positivos (FP), falsos negativos (FN) y verdaderos negativos (TN) y por ende cambia el valor de la sensibilidad y la especificidad. 
+
+Lo anterior permite elegir el "punto de corte" de acuerdo con el objetivo de la prueba. Esto es, se requiere crear una prueba que me de una gran certeza que los resultados negativos aseguren una ausencia de una condición, entonces se desea elegir el punto de corte que nos de una alta sensibilidad. Si por el contrario, se busca que los resultados positivos aseguren la presencia de una condición, entonces se desea elegir el punto de corte que nos de una alta especificidad.
+
+Como ejemplo, consideremos las pruebas A y B para determinar si una persona tiene diabetes. Ambas pruebas dan como resultado un "score" (valor entre 0 y 1), y por cada punto de corte definido para determinar si se padece o no diabetes se obtienen distintos valores de sensibilidad y especificidad (ver gráfica inferior).
+
+```{r}
+tibble(sensibilidad = c(1, 0.98, 0.95, 0.90, 0.88, 0.88, 0.85, 0.81, 0.76, 0.63, 0.2, 0,
+                        1, 0.95, 0.92, 0.87, 0.82, 0.79, 0.79, 0.79, 0.75, 0.63, 0.1, 0),
+       especificidad = c(0, 0.1, 0.62, 0.62, 0.73, 0.78, 0.81, 0.88, 0.88, 0.93, 0.95, 1,
+                         0, 0.05, 0.57, 0.61, 0.68, 0.87, 0.90, 0.94, 0.97, 0.97, 0.98, 1),
+       prueba = c(rep("A", 12), rep("B", 12))) %>% 
+  ggplot(aes(x = 1 - sensibilidad, y = especificidad, color = prueba)) +
+  geom_line(size = 1) +
+  scale_color_manual(name = "Prueba", values = c("steelblue", "orchid")) +
+  geom_abline(intercept = 0, slope = 1, color = "firebrick", linetype = 2, size = 1) +
+  coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+  labs(title = "Curva ROC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
 # Ejercicio 3
 En el artículo Clopper, C. J. & Pearson, E. S. 1934. **The Use of Confidence or Fiducial Limits Illustrated in the Case of the Binomial**. *Biometrika*, Vol. 26, No. 4, vienen las tablas para calcular un intervalo EXACTO de confianza para p. Úsa esas tablas para calcular un intervalo al 95% y otro al 99% para una muestra tamaño $n = 50$ y $x = 9$.
 
 # Ejercicio 4
 Indica el esquema de muestreo y la hipótesis nula y alternativa para cada uno de los siguientes ejemplos:
-\begin{table}[H]
-\centering
-\begin{tabular}{p{10cm}|l|l}
-\toprule
-\multirow{2}{*}{Ejemplo} & Esquema de & Hipótesis nula \\
- & muestreo & y alternativa \\
-\midrule
-\textbf{a)} En un hospital se decide registrar el número de parejas que lleguen en 1 año con la finalidad de someterse a un tratamiento de fertilidad. Al cabo del año, se genera una tabla en donde se registra el grupo de edad de la mujer al iniciar el tratamiento (20 a 30 y 31 a 45) y el resultado (embarazo o no embarazo). & & \\
-\midrule
-\text{b)} En un hospital de quiere evaluar la asociación entre edad de la mujer y resultado de un tratamiento de fertilidad. Se establece al inicio del estudio que se registraran los resultados de 722 personas. Al finalizar el tratamiento se genera una tabla en donde se registra el grupo de edad de la mujer al iniciar el tratamiento (20 a 30 y 31 a 45) y el resultado (embarazo o no embarazo). & & \\
-\midrule
-\textbf{c)} En un hospital de quiere evaluar sí el resultado de un tratamiento de fertilidad cambia de acuerdo a la edad de la mujer que desea embarazarse. Para ello se deciden registrar los resultados de 350 mujeres cuya edad está entre los 20 y 30 años, y 360 mujeres cuya edad está entre los 31 y 45 años. Al finalizar el tratamiento se genera una tabla en donde se registra el grupo de edad de la mujer al iniciar el tratamiento y el resultado (embarazo o no embarazo). & & \\
-\bottomrule
-\end{tabular}
-\end{table}
+
+## Ejemplo a)
+En un hospital se decide registrar el número de parejas que lleguen en 1 año con la finalidad de someterse a un tratamiento de fertilidad. Al cabo del año, se genera una tabla en donde se registra el grupo de edad de la mujer al iniciar el tratamiento (20 a 30 y 31 a 45) y el resultado (embarazo o no embarazo).
+
+El esquema de muestreo es **Poisson**
+
+Las hipótesis nula y alternativa son:
+\begin{align*}
+\mathrm{H}_0 &= \text{Edad y resultado (del tratamiento) no estan relacionados} \\
+\mathrm{H}_a &= \text{Edad y resultado presentan algún grado de asociación}
+\end{align*}
+
+
+## Ejemplo b)
+En un hospital de quiere evaluar la asociación entre edad de la mujer y resultado de un tratamiento de fertilidad. Se establece al inicio del estudio que se registraran los resultados de 722 personas. Al finalizar el tratamiento se genera una tabla en donde se registra el grupo de edad de la mujer al iniciar el tratamiento (20 a 30 y 31 a 45) y el resultado (embarazo o no embarazo).
+
+El esquema de muestreo es **Multinomial**
+
+Las hipótesis nula y alternativa son:
+\begin{align*}
+\mathrm{H}_0 &= \text{Las variables edad y resultado (del tratamiento) son independientes} \\
+\mathrm{H}_a &= \text{Las variables edad y resultado presentan algún grado de dependencia}
+\end{align*}
+Expresado en términos de ecuaciones se tiene
+\begin{align*}
+\mathrm{H}_0 &= \mathrm{P} (edad, resultado) = \mathrm{P} (edad) \cdot \mathrm{P}(resultado)  \\
+\mathrm{H}_a &= \mathrm{P} (edad, resultado) \neq \mathrm{P} (edad) \cdot \mathrm{P}(resultado)
+\end{align*}
+
+## Ejemplo c)
+En un hospital de quiere evaluar sí el resultado de un tratamiento de fertilidad cambia de acuerdo a la edad de la mujer que desea embarazarse. Para ello se deciden registrar los resultados de 350 mujeres cuya edad está entre los 20 y 30 años, y 360 mujeres cuya edad está entre los 31 y 45 años. Al finalizar el tratamiento se genera una tabla en donde se registra el grupo de edad de la mujer al iniciar el tratamiento y el resultado (embarazo o no embarazo)
+
+El esquema de muestreo es **Multinomial-Producto**
+
+Las hipótesis nula y alternativa son:
+\begin{align*}
+\mathrm{H}_0 &= \text{Hay homogeneidad en los resultados respecto a los dos grupos de mujeres} \\
+\mathrm{H}_a &= \text{No hay homogeneidad en los resultados respecto a los dos grupos de mujeres}
+\end{align*}
+
+Si denotamos por $p_{1}$ la distribución de probabilidad del resultado (del tratamiento) para las mujeres con edad entre 20 a 30 años y por $p_{2}$ la disribución de probabilidad del resultado (del tratamiento) para las mujeres con edad entre 31 a 45 años, entonces
+\begin{align*}
+\mathrm{H}_0 = p_{1} = p_{2} \qquad \text{v.s.} \qquad \mathrm{H}_a = p_{1} \neq p_{2}
+\end{align*}
+
 
 # Ejercicio 5
 Los datos del ejemplo 4a) se han resumido en la siguiente tabla:
