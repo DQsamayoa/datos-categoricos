@@ -313,6 +313,7 @@ El valor del $or$ podemos interpretarlo como que hay más posibilidades de embar
 Para calcular el intervalo de confianza (al $95\%$) primero calculamos el error
 ```{r, echo=TRUE}
 error <- sqrt((1/conteos[1])+(1/conteos[2]) +(1/conteos[3]) +(1/conteos[4]))
+error
 ```
 
 Y luego los límites
@@ -320,6 +321,7 @@ Y luego los límites
 ```{r, echo=TRUE}
 LI <- exp(log(or)-1.96*error)
 LS <- exp(log(or)+1.96*error)
+print(c(LI, LS))
 ```
 
 De esta manera, tenemos que el límite inferior es `r LI ` y el superior `r LS `. Podemos decir entonces, que con un nivel de confianza del $95\%$ el verdadero valor del *odds ratio* caerá en este intervalo.
@@ -329,20 +331,22 @@ De esta manera, tenemos que el límite inferior es `r LI ` y el superior `r LS `
 Calculen el Relative Risk a mano y en R. Interpreten el valor RR y los límites superior e inferior del intervalo de confianza.
 
 ```{r}
-rr= (conteos[1]/(conteos[1]+ conteos[3]))/(conteos[2]/(conteos[2]+ conteos[4]))
+rr <- (conteos[1]/(conteos[1]+ conteos[3]))/(conteos[2]/(conteos[2]+ conteos[4]))
 rr
 ```
 
 El error para el *risk ratio* es
 
 ```{r}
- es <- sqrt(((1- pEmb2030)/(totalFilas[1]*pEmb2030))+((1- pNEmb2030)/(totalFilas[2]*pNEmb2030)))
+es <- sqrt(((1- pEmb2030)/(totalFilas[1]*pEmb2030))+((1- pNEmb2030)/(totalFilas[2]*pNEmb2030)))
+es
 ```
 
 El interalo de confianza asociado es 
 ```{r}
 ll <- rr-1.96*es
 ul <- rr+1.96*es
+print(c(ll, ul))
 ```
 
 De esta manera, tenemos que el límite inferior es `r ll ` y el superior `r ul`. Podemos decir entonces, que con un nivel de confianza del $95\%$ el verdadero valor del *risk ratio* caerá en este intervalo.
@@ -362,6 +366,54 @@ HPV 16 & 14 & 42 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+Las hipótesis son: la hipótesis nula $H_0$, la cual es que no existe relación alguna entre los virus de papiloma humano con la aparición en las lesiones del cérvix, contra la hipótesis alternativa $H_1$, que indica que si existe algún tipo de relación.
+
+$$ H_0: \theta = 0 \;\; vs \; \; H_1: \theta \neq 0$$
+
+Para realizar el contraste de hipótesis requerimos calcular la prueba exacta de Fisher. Con esta finalidad, calcularemos las probabilidades hipergeométricas procedentes de la prueba, de este modo:
+
+\[ \mathbb{P}(X = x) = \dfrac{{k\choose x}  {n-k \choose n-x}}{{N\choose n}}\]
+
+Y esto lo podemos realizar con la siguiente expresión equivalente:
+
+\begin{align*}
+\mathbb{P} = \frac{(n_{11} +n_{12})! \cdot (n_{21}+n_{22})!\cdot (n_{11}+n_{21})!\cdot (n_{12}+n_{22})!}{n_{11}! n_{12}! n_{21}! n_{22}!n!}
+\end{align*}
+
+Así tenemos para $n_{11}=47$
+
+\begin{align*}
+\mathbb{P}_{n_{11}} = \frac{(47 + 3)! \cdot (14 + 42)!\cdot (47 + 14)!\cdot (3+42)!}{47! \cdot 3! \cdot 14! \cdot 72! \cdot 106!} = 6.026482e^{-14}
+\end{align*}
+
+Sin embargo para poder encontrar el $P$-valor necesitamos realizar la suma de todos los valores de las probabilidades en la tabla, menores o iguales que los valores observados. Esto debido a que las colas en la distribución no son simétricas.
+
+\begin{align*}
+\mathbb{P}_{n_{11}=48} &= 1.226319e^{-15} \\
+\mathbb{P}_{n_{11}=49} &= 1.478863e^{-17} \\
+\mathbb{P}_{n_{11}=50} &= 7.887271e^{-20} \\
+\mathbb{P}_{n_{11}=10} &= 2.078427e^{-14} \\
+\mathbb{P}_{n_{11}=9} &= 4.874360e^{-16} \\
+\mathbb{P}_{n_{11}=8} &= 7.883063e^{-18}  \\
+\mathbb{P}_{n_{11}=7} &= 8.147868e^{-20} \\
+\mathbb{P}_{n_{11}=6} &= 4.713643e^{-22} \\
+\mathbb{P}_{n_{11}=5} &= 1.122296e^{-24}
+\end{align*}
+
+Sumando estos valores tenemos entonces que el $P$-value $= 8.278568e^{-14}$. Ahora comparamos este valor con la prueba exacta de Fisher con ayuda de R.
+
+```{r}
+dat <- matrix(c(47, 14, 3, 42), ncol=2)
+colnames(dat)<- c("sin lesiones", "con lesiones")
+rownames(dat)<- c("HPV11", "HPV16")
+dat
+
+fisher.test(dat)
+```
+
+Rechazamos la hipótesis $H_0$, ya que el $p$-value resulta ser menor que $0.05$. Por lo que podemos concluir que hay evidencia estadística significativa que sugiere, que existe relación, entre los dos tipos de virus y la aparición de lesiones en el cérvix. 
+
 
 # Ejercicio 7
 Comparación de métodos para generar intervalos de confianza.
