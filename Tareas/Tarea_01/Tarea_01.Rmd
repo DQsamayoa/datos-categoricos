@@ -169,7 +169,7 @@ Si denotamos por $p_{1}$ la distribución de probabilidad del resultado (del tra
 
 
 # Ejercicio 5
-Los datos del ejemplo 4a) se han resumido en la siguiente tabla:
+Los datos del ejemplo $4a)$ se han resumido en la siguiente tabla:
 \begin{table}[H]
 \centering
 \begin{tabular}{l|l|l}
@@ -184,19 +184,156 @@ Los datos del ejemplo 4a) se han resumido en la siguiente tabla:
 \end{table}
 
 ## Inciso 5.1
-Realicen “a mano” la prueba de Ji cuadrada. Concluyan.
+Realicen *a mano* la prueba de Ji cuadrada. Concluyan.
+
+
+```{r}
+edad <- c("20-30", "31-45", "20-30", "31-45")
+resultado <- c("embarazo", "embarazo", "no embarazo", "no embarazo")
+conteos <- c(26, 146, 85, 565)
+tabla <- data.frame(resultado, edad, conteos)
+tabla <- xtabs(conteos ~ edad + resultado, data = tabla)
+tabla
+```
+Calculando las marginales:
+
+Dimensión 1 (filas)
+```{r}
+totalFilas <- margin.table(tabla, 1)
+totalFilas
+```
+Dimensión 2 (columnas)
+```{r}
+totalColumnas <- margin.table(tabla, 2)
+totalColumnas
+```
+
+Y el total
+
+```{r}
+total <- sum(tabla)
+total
+```
+
+Ahora calculamos los valores esperados
+
+```{r, echo=TRUE}
+
+esperados <- c(totalFilas[1]*totalColumnas[1]/total, 
+                totalFilas[2]*totalColumnas[1]/total,
+                totalFilas[1]*totalColumnas[2]/total,
+                totalFilas[2]*totalColumnas[2]/total
+              )
+esperados
+
+```
+
+Y obtenemos las diferencias cuadradas entre los observados y esperados. Y luego las dividimos entre esperados
+
+```{r}
+diferencias2 <- (conteos-esperados)^2
+dif2_esp <- diferencias2 / esperados
+dif2_esp
+```
+
+Finalmente, obtenemos la Chi cuadrada al sumar  estos valores
+
+```{r}
+chi2 <- sum(dif2_esp)
+chi2
+```
+
+Y realizamos la prueba. Sabiendo que la prueba tiene $1$ grado de libertad. 
+```{r}
+p <- 1- pchisq(chi2, 1)
+p
+```
+
+Dado este resultado, no podemos rechazar la hipótesis nula y concluir que exista relación entre la prueba de embarazo y la edad.
 
 ## Inciso 5.2
 Corroboren el resultado en R. Muestren el resultado.
 
+Aplicamos el comando *chisq.test()* y obtenemos el mismo resultado.
+```{r}
+prueba <- chisq.test(xtabs(conteos ~ edad + resultado, data = tabla,
+                           ), simulate.p.value=TRUE)
+prueba
+```
+
+
 ## Inciso 5.3
 Calculen la probabilidad de embarazo para mujeres de $20 - 30$ años y la probabilidad de embarazo para mujeres de $31 - 45$ años
+
+La probabilidad de embarazo para mujeres de entre $20$ y $30$ años es 
+```{r}
+pEmb2030 = conteos[1]/ totalFilas[1]
+pEmb2030
+```
+
+La probabilidad de embarazo para mujeres de entre $31$ y $45$ años es 
+```{r}
+pEmb3145 = conteos[2]/ totalFilas[2]
+pEmb3145
+```
+
 
 ## Inciso 5.4
 Calculen el Odds Ratio a mano y en R. Interpreten el valor OR y los límites superior e inferior del intervalo de confianza.
 
+Calculemos primero la probabilidad de no embarazo dado que se pertenece a ambos grupos:
+
+```{r}
+pNEmb2030 = conteos[3]/ totalFilas[1]
+pNEmb2030
+pNEmb3145 = conteos[4]/ totalFilas[2]
+pNEmb3145
+```
+
+Así, el *odds ratio* es el siguiente
+```{r}
+or <- pEmb2030/pNEmb2030/pEmb3145/pNEmb3145
+or[1]
+```
+
+El valor del $or$ podemos interpretarlo como que hay más posibilidades de embarazo que de no embarazo si se tienen de $20$ a $30$ años en vez de $31$ a $45$ años.
+
+Para calcular el intervalo de confianza (al $95%$) primero calculamos el error
+```{r, echo=TRUE}
+error <- sqrt((1/conteos[1])+(1/conteos[2]) +(1/conteos[3]) +(1/conteos[4]))
+```
+
+Y luego los límites
+
+```{r, echo=TRUE}
+LI <- exp(log(or)-1.96*error)
+LS <- exp(log(or)+1.96*error)
+```
+
+De esta manera, tenemos que el límite inferior es ```{r} LI ``` y el superior ```{r} LS ```. Podemos decir entonces, que con un nivel de confianza del $95%$ el verdadero valor del *odds ratio* caerá en este intervalo.
+
+
 ## Inciso 5.5
 Calculen el Relative Risk a mano y en R. Interpreten el valor RR y los límites superior e inferior del intervalo de confianza.
+
+```{r}
+rr= (conteos[1]/(conteos[1]+ conteos[3]))/(conteos[2]/(conteos[2]+ conteos[4]))
+rr
+```
+
+El error para el *risk ratio* es
+
+```{r}
+ es <- sqrt(((1- pEmb2030)/(totalFilas[1]*pEmb2030))+((1- pNEmb2030)/(totalFilas[2]*pNEmb2030)))
+```
+
+El interalo de confianza asociado es 
+```{r}
+ll <- rr-1.96*es
+ul <- rr+1.96*es
+```
+
+De esta manera, tenemos que el límite inferior es ```{r} ll ``` y el superior ```{r} ul ```. Podemos decir entonces, que con un nivel de confianza del $95%$ el verdadero valor del *risk ratio* caerá en este intervalo.
 
 # Ejercicio 6
 Se realizó un estudio en la India para determinar la asociación entre dos tipos de virus de papiloma humano con la aparición en las lesiones del cérvix. Realicen una prueba exacta de Fisher “a mano” y en R. Interpreten.
