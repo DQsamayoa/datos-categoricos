@@ -23,7 +23,7 @@ fig_align: "center"
 ---
 
 ```{r setup, include = FALSE, eval = TRUE}
-knitr::opts_chunk$set(echo = FALSE, eval = TRUE, fig.height = 4)
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, fig.height = 3)
 
 # Se cargan las librerias a utilizar
 library(tidyverse)
@@ -32,6 +32,7 @@ library(scales)
 library(grid)
 library(kableExtra)
 library(latex2exp)
+library(binom)
 ```
 
 # Ejercicio 1
@@ -119,6 +120,17 @@ tibble(sensibilidad = c(1, 0.98, 0.95, 0.90, 0.88, 0.88, 0.85, 0.81, 0.76, 0.63,
 
 # Ejercicio 3
 En el artículo Clopper, C. J. & Pearson, E. S. 1934. **The Use of Confidence or Fiducial Limits Illustrated in the Case of the Binomial**. *Biometrika*, Vol. 26, No. 4, vienen las tablas para calcular un intervalo EXACTO de confianza para p. Úsa esas tablas para calcular un intervalo al 95% y otro al 99% para una muestra tamaño $n = 50$ y $x = 9$.
+
+No se encontraron las tablas en el artículo, pero se encontraron las gráficas asociadas a dichas tablas. Se usarán estas gráficas para obtener los intervalos de confianza.
+
+El procedimiento para encontrarlos es fijar el valor de $x$ en el eje horizontal y seguir una línea recta vertical hasta itnersectar las dos curvas que esten asociadas al valor de $n$. Ahí se obtendrá la coordenada en $y$ reference a los límites inferior y superior del intervalo de confianza para $p$.
+
+![](imgs/confianza_95.png){ width=48% } ![](imgs/confianza_99.png){ width=48% }
+
+Para el caso de $n = 50$ y $x = 9$, con un intervalo de confianza al $95\%$, se tiene $(0.775, 0.960)$.
+
+Para el caso de $n = 50$ y $x = 9$, con un intervalo de confianza al $99\%$, se tiene $(0.740, 0.975)$.
+
 
 # Ejercicio 4
 Indica el esquema de muestreo y la hipótesis nula y alternativa para cada uno de los siguientes ejemplos:
@@ -220,11 +232,171 @@ Comparación de métodos para generar intervalos de confianza.
 ## Inciso 7.1
 Generen intervalos de confianza al $99\%$ para una $p$ estimada de $p = 0.9$ y $p = 0.5$ con $n = 10, 20, 30, 40, 50, 60, 70, 80, 90, 100$ usando los comandos `binom.exact`, `binom.wilson` y `binom.asymp`.
 
+El código utilizado en `R` es el siguiente:
+```{r, eval = FALSE}
+# Intervalos de confianza al 99% para p = 5
+binom.exact(seq(5,50,5), seq(10, 100, 10),conf.level = 0.99)
+binom.wilson(seq(5,50,5), seq(10, 100, 10),conf.level = 0.99)
+binom.asymp(seq(5,50,5), seq(10, 100, 10),conf.level = 0.99)
+
+# Intervalos de confianza al 99% para p = 9
+binom.exac(seq(9,90,9), seq(10, 100, 10),conf.level = 0.99)
+binom.wilson(seq(9,90,9), seq(10, 100, 10),conf.level = 0.99)
+binom.asymp(seq(9,90,9), seq(10, 100, 10),conf.level = 0.99)
+```
+
 ## Inciso 7.2
 Muestra los límites de los intervalos generados a través de los tres métodos
+
+```{r}
+renombrar <- function(x, prefijo) {paste0(prefijo, ".",x)}
+
+
+exacto9 <- binom.exact(seq(9,90,9), seq(10, 100, 10),conf.level = 0.99) %>% 
+          as_tibble() %>% 
+          mutate(method = as.character(method)) %>% 
+          rename_all(funs(renombrar), prefijo = "exacto")
+
+wilson9 <- binom.wilson(seq(9,90,9), seq(10, 100, 10),conf.level = 0.99) %>% 
+          as_tibble() %>% 
+          mutate(method = as.character(method)) %>% 
+          rename_all(funs(renombrar), prefijo = "wilson")
+          
+asymp9 <- binom.asymp(seq(9,90,9), seq(10, 100, 10),conf.level = 0.99) %>% 
+          as_tibble() %>% 
+          mutate(method = as.character(method)) %>% 
+          rename_all(funs(renombrar), prefijo = "asymp")
+
+intervalos9 <- exacto9 %>% 
+              inner_join(wilson9, by = c("exacto.x" = "wilson.x", "exacto.n" = "wilson.n", "exacto.mean" = "wilson.mean")) %>% 
+              inner_join(asymp9, by = c("exacto.x" = "asymp.x", "exacto.n" = "asymp.n", "exacto.mean" = "asymp.mean")) %>% 
+              select(-ends_with("method")) %>% 
+              rename(x = exacto.x,
+                     n = exacto.n,
+                     mean = exacto.mean)
+intervalos9 %>% 
+  knitr::kable(format = "latex", booktabs = TRUE, longtable = TRUE, linesep = "",
+               escape = FALSE, digits = 3,
+               caption = "Intervalos de confianza para p = 0.9",
+               col.names = c("x", "n", "media", rep(c("Inferior", "Superior"), 3))) %>% 
+  row_spec(0, align = "c") %>% 
+  add_header_above(c("", "", "", "exacto" = 2, "wilson" = 2, "asymp" = 2)) %>%
+  kableExtra::kable_styling(latex_options = c("striped", "repeat_header"))
+```
+
+```{r}
+exacto5 <- binom.exact(seq(5,50,5), seq(10, 100, 10),conf.level = 0.99) %>% 
+          as_tibble() %>% 
+          mutate(method = as.character(method)) %>% 
+          rename_all(funs(renombrar), prefijo = "exacto")
+
+wilson5 <- binom.wilson(seq(5,50,5), seq(10, 100, 10),conf.level = 0.99) %>% 
+          as_tibble() %>% 
+          mutate(method = as.character(method)) %>% 
+          rename_all(funs(renombrar), prefijo = "wilson")
+          
+asymp5 <- binom.asymp(seq(5,50,5), seq(10, 100, 10),conf.level = 0.99) %>% 
+          as_tibble() %>% 
+          mutate(method = as.character(method)) %>% 
+          rename_all(funs(renombrar), prefijo = "asymp")
+
+intervalos5 <- exacto5 %>% 
+              inner_join(wilson5, by = c("exacto.x" = "wilson.x", "exacto.n" = "wilson.n", "exacto.mean" = "wilson.mean")) %>% 
+              inner_join(asymp5, by = c("exacto.x" = "asymp.x", "exacto.n" = "asymp.n", "exacto.mean" = "asymp.mean")) %>% 
+              select(-ends_with("method")) %>% 
+              rename(x = exacto.x,
+                     n = exacto.n,
+                     mean = exacto.mean)
+intervalos5 %>% 
+  knitr::kable(format = "latex", booktabs = TRUE, longtable = TRUE, linesep = "",
+               escape = FALSE, digits = 3,
+               caption = "Intervalos de confianza para p = 0.5",
+               col.names = c("x", "n", "media", rep(c("Inferior", "Superior"), 3))) %>% 
+  row_spec(0, align = "c") %>% 
+  add_header_above(c("", "", "", "exacto" = 2, "wilson" = 2, "asymp" = 2)) %>%
+  kableExtra::kable_styling(latex_options = c("striped", "repeat_header"))
+```
 
 ## Inciso 7.3
 Realicen una gráfica en donde comparen los intervalos generados por los tres métodos y las dos p estimadas
 
+```{r, fig.height = 3}
+colnames(exacto9) <- c("method", "x", "n", "mean", "lower", "upper")
+colnames(wilson9) <- colnames(exacto9)
+colnames(asymp9) <- colnames(exacto9)
+
+bind_rows(exacto9, wilson9, asymp9) %>% 
+  as_tibble() %>% 
+  ggplot(aes(x = n)) +
+  geom_hline(yintercept = 1, color = "firebrick", linetype = 2) + 
+  geom_point(aes(y = mean)) +
+  geom_point(aes(y = lower, color = method)) +
+  geom_point(aes(y = upper, color = method)) +
+  labs(title = "Comparación de intervalos de confianza para p = 0.9",
+       x = "n",
+       y = "media",
+       color = "método") +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r, fig.height = 3}
+colnames(exacto5) <- c("method", "x", "n", "mean", "lower", "upper")
+colnames(wilson5) <- colnames(exacto5)
+colnames(asymp5) <- colnames(exacto5)
+
+bind_rows(exacto5, wilson5, asymp5) %>% 
+  as_tibble() %>% 
+  ggplot(aes(x = n)) +
+  geom_hline(yintercept = 1, color = "firebrick", linetype = 2) + 
+  geom_point(aes(y = mean)) +
+  geom_point(aes(y = lower, color = method)) +
+  geom_point(aes(y = upper, color = method)) +
+  labs(title = "Comparación de intervalos de confianza para p = 0.5",
+       x = "n",
+       y = "media",
+       color = "método") +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
 ## Inciso 7.4
 ¿Cuál método elegirían? ¿Cuál método no elegirían? ¿Por qué?
+
+En la gráfica de intervalos de confianza al $99\%$ para $p = 0.9$, notamos que el método `binom.asymp` contiene parte del intervalo de confiana mayor a $p = 1$ para valores con $n < 60$. Por tal motivo este método no lo usaríamos cuando $p$ sea cercano a $0.9$.
+
+Graficando la longitud de los intervalos de confianza para $p = 0.9$, y considerando que `binom.asymp` no lo usaremos por exceder el valor de $p = 1$. Notamos que el método `binom.wilson` es el que genera los intervalos de confianza de menor longitud. Por lo que, para el caso en que $p approx 0.9$ es mejor utilizar el método **Wilson** para obtener el intervalos de confianza.
+
+```{r, fig.height = 3}
+bind_rows(exacto9, wilson9, asymp9) %>% 
+  as_tibble() %>% 
+  mutate(longitud = upper - lower) %>% 
+  ggplot(aes(x = n, y = longitud, color = method)) +
+  geom_line(size = 1) +
+  labs(title = "Comparación de intervalos de confianza para p = 0.9",
+       x = "n",
+       y = "longitud intervalo",
+       color = "método") +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Para el caso cuando $p = 0.5$ se observa todos los métodos tienen intervalos de confianza dentro del rango $(0, 1)$. Por lo tanto, usaremos el criterio de menor longitud para seleccionar el método para el cálculo del intervalos.
+
+En la gráfica inferior, se observa que el intervalo generado con `binom.wilson` es el que tiene la menor longitud para los valores de $n$ en el rango de $n = 10, \ldots, 100$. Por lo tanto, para el caso en que $p \approx 0.5$ se usará el método de **Wilson** para obtener el intervalo de confianza.
+
+```{r, fig.height = 3}
+bind_rows(exacto5, wilson5, asymp5) %>% 
+  as_tibble() %>% 
+  mutate(longitud = upper - lower) %>% 
+  ggplot(aes(x = n, y = longitud, color = method)) +
+  geom_line(size = 1) +
+  labs(title = "Comparación de intervalos de confianza para p = 0.5",
+       x = "n",
+       y = "longitud intervalo",
+       color = "método") +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
