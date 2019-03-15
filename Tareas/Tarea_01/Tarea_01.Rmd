@@ -310,7 +310,7 @@ or[1]
 
 El valor del $or$ podemos interpretarlo como que hay más posibilidades de embarazo que de no embarazo si se tienen de $20$ a $30$ años en vez de $31$ a $45$ años.
 
-Para calcular el intervalo de confianza (al $95%$) primero calculamos el error
+Para calcular el intervalo de confianza (al $95\%$) primero calculamos el error
 ```{r, echo=TRUE}
 error <- sqrt((1/conteos[1])+(1/conteos[2]) +(1/conteos[3]) +(1/conteos[4]))
 ```
@@ -322,7 +322,7 @@ LI <- exp(log(or)-1.96*error)
 LS <- exp(log(or)+1.96*error)
 ```
 
-De esta manera, tenemos que el límite inferior es ```{r} LI ``` y el superior ```{r} LS ```. Podemos decir entonces, que con un nivel de confianza del $95%$ el verdadero valor del *odds ratio* caerá en este intervalo.
+De esta manera, tenemos que el límite inferior es `r LI ` y el superior `r LS `. Podemos decir entonces, que con un nivel de confianza del $95\%$ el verdadero valor del *odds ratio* caerá en este intervalo.
 
 
 ## Inciso 5.5
@@ -345,7 +345,7 @@ ll <- rr-1.96*es
 ul <- rr+1.96*es
 ```
 
-De esta manera, tenemos que el límite inferior es ```{r} ll ``` y el superior ```{r} ul ```. Podemos decir entonces, que con un nivel de confianza del $95%$ el verdadero valor del *risk ratio* caerá en este intervalo.
+De esta manera, tenemos que el límite inferior es `r ll ` y el superior `r ul`. Podemos decir entonces, que con un nivel de confianza del $95\%$ el verdadero valor del *risk ratio* caerá en este intervalo.
 
 # Ejercicio 6
 Se realizó un estudio en la India para determinar la asociación entre dos tipos de virus de papiloma humano con la aparición en las lesiones del cérvix. Realicen una prueba exacta de Fisher “a mano” y en R. Interpreten.
