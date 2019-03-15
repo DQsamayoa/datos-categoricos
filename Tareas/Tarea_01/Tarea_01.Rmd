@@ -296,7 +296,7 @@ or <- pEmb2030/pNEmb2030/pEmb3145/pNEmb3145
 or[1]
 ```
 
-El valor del $or$ podemos interpretarlo como que hay más posibilidades de embarazo que de no embarazo si se tienen de $20$ a $30$ años en vez de $31$ a $45$ años.
+El valor del $or$ podemos interpretarlo como que hay más posibilidades (en particular $80\%$ más) de embarazo que de no embarazo si se tienen de $20$ a $30$ años en vez de $31$ a $45$ años.
 
 Para calcular el intervalo de confianza (al $95\%$) primero calculamos el error
 ```{r, echo=TRUE}
@@ -320,6 +320,7 @@ Calculen el Relative Risk a mano y en R. Interpreten el valor RR y los límites 
 rr= (conteos[1]/(conteos[1]+ conteos[3]))/(conteos[2]/(conteos[2]+ conteos[4]))
 rr
 ```
+Este valor podemos interpretarlo como el riesgo que las mujeres de entre $20$ y $30$ años tienen de embarazo en contra del embarazo de las mujeres de entre $31$ y $45$.
 
 El error para el *risk ratio* es
 
