@@ -1,0 +1,192 @@
+---
+title: "Análisis de Datos Categóricos"
+subtitle: "Tarea 02"
+author:
+  - "Rivera Torres Francisco de Jesús"
+  - "Rodríguez Maya Jorge Daniel"
+  - "Samayoa Donado Víctor Augusto"
+  - "Trujillo Bariios Georgina"
+date: "Mayo 23, 2019"
+output:
+  pdf_document:
+    toc: false
+    number_sections: false
+    fig_caption: true
+    highlight: kate
+    df_print: kable
+    includes:
+      in_header: tex/header.tex
+fontsize: 11pt
+documentclass: article
+classoption: twoside
+fig_align: "center"
+---
+
+```{r setup, include = FALSE, eval = TRUE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.height = 3)
+
+# Se cargan las librerias a utilizar
+library(tidyverse)
+library(readxl)
+library(scales)
+library(grid)
+library(kableExtra)
+library(latex2exp)
+library(binom)
+```
+
+# Ejercicio 1
+Los datos `bacalao.csv` corresponden a número de bacalaos capturados en diferentes estaciones de pesca. Para cada estación, se provee del ID de la estación, la temperatura promedio del agua $(^{\circ}F)$, la latitud, la longitud y la profundidad máxima.
+
+Utilizando como variable dependiente el número de peces capturados (conteos) y como variables explicativas el resto de las variables, se han generado dos modelos: modelo 1 y modelo 2 Se muestran a continuación las salidas de `R` para ambos modelos.
+
+```{r, echo = FALSE}
+Bacalao <- read_csv("datos/bacalao.csv", col_types = cols(.default = col_integer(),
+                                                          Latitude = col_double(),
+                                                          Longitude = col_double(),
+                                                          Temperature = col_double())) %>% 
+            rename(peces_capturados = `peces capturados`,
+                   station_id = `Station ID`)
+
+Bacalao %>% 
+  head() %>% 
+  knitr::kable(format = "latex", booktabs = TRUE, longtable = TRUE, linesep = "",
+               escape = FALSE, digits = 3,
+               caption = "Datos de la encuesta",
+               col.names = c("ID estación", "Latitud", "Longitud", "Profundidad", "Temperatura", "Peces capturados")) %>% 
+  row_spec(0, align = "c") %>% 
+  kableExtra::kable_styling(latex_options = c("striped", "repeat_header"))
+```
+
+```{r}
+modelo2<-glm(peces_capturados ~ Latitude + Longitude + Temperature + Depth,
+             family = poisson,
+             data = Bacalao)
+summary(modelo2)
+```
+
+```{r}
+modelo1<-glm(peces_capturados ~ Latitude + Longitude + Temperature,
+             family = poisson,
+             data = Bacalao)
+summary(modelo1)
+```
+
+```{r, eval = FALSE}
+anova(modelo1, modelo2, test = "Chisq")
+```
+
+
+```{r, echo = FALSE}
+anova(modelo1, modelo2, test = "Chisq") %>% 
+  knitr::kable(format = "latex", booktabs = TRUE, longtable = TRUE, linesep = "",
+               escape = FALSE, digits = 3)
+```
+
+
+## Inciso 1.a)
+Escribe los modelos 1 y 2 con los valores de los coeficientes, indicando claramente los componentes aleatorio, sistemático y la función liga.
+
+## Inciso 1.b)
+Escribe las hipótesis nula $(H_0)$ y alternativa $(H_A)$ del Análisis de Devianza que se muestra en la salida de `R`.
+
+## Inciso 1.c)
+Escribe la conclusión de la prueba de Análisis de Devianza para la que escribiste las hipótesis, incluyendo en tu conclusión si vale o no la pena la inclusión de *"Depth"* (profundidad máxima) en el modelo.
+
+## Inciso 1.d)
+Interpreta los coeficientes del modelo 2.
+
+
+
+# Ejercicio 2
+En el archivo `encuesta.csv` se encuentran los conteos de una encuesta realizada en EU en donde se les preguntó a adultos si estaban de acuerdo con la distribución de condones a adolescentes (si condón/no condón) , si estaban de acuerdo con el sexo premarital (desacuerdo / acuerdo) y su posición política (liberal/demócrata/ repúblicano).
+
+```{r, echo = FALSE}
+Encuesta <- read_csv("datos/encuestaUSA2.csv", col_types = cols(.default = col_character(),
+                                                                 conteos = col_integer()))
+
+Encuesta %>% 
+  knitr::kable(format = "latex", booktabs = TRUE, longtable = TRUE, linesep = "",
+               escape = FALSE, digits = 3,
+               caption = "Datos de la encuesta",
+               col.names = c("Conteos", "Posición", "Condones", "Premarital")) %>% 
+  row_spec(0, align = "c") %>% 
+  kableExtra::kable_styling(latex_options = c("striped", "repeat_header"))
+```
+
+```{r}
+modeloA <- glm(conteos ~ posicion + condones + premarital,
+               family = poisson,
+               data = Encuesta)
+summary(modeloA)
+```
+
+```{r}
+modeloB <- glm(conteos ~ posicion * condones * premarital,
+               family = poisson,
+               data = Encuesta)
+summary(modeloB)
+```
+
+```{r}
+modeloC <- glm(conteos ~ premarital + condones*posicion,
+               family = poisson,
+               data = Encuesta)
+summary(modeloC)
+```
+
+```{r}
+modeloD <- glm(conteos ~ condones + posicion*premarital,
+               family = poisson,
+               data = Encuesta)
+summary(modeloD)
+```
+
+```{r}
+modeloE <- glm(conteos ~ posicion + condones*premarital,
+               family = poisson,
+               data = Encuesta)
+summary(modeloE)
+```
+
+```{r}
+modeloF <- glm(conteos ~ condones*posicion + condones*premarital + posicion*premarital,
+               family = poisson,
+               data = Encuesta)
+summary(modeloF)
+```
+
+```{r}
+modeloG <- glm(conteos ~ condones*posicion + posicion*premarital,
+               family = poisson,
+               data = Encuesta)
+summary(modeloG)
+```
+
+```{r, eval = FALSE}
+anova (modeloF, modeloB, test = "Chisq")
+```
+
+
+```{r, echo = FALSE}
+anova (modeloF, modeloB, test = "Chisq") %>% 
+    knitr::kable(format = "latex", booktabs = TRUE, longtable = TRUE, linesep = "",
+               escape = FALSE, digits = 3)
+```
+
+
+## Inciso 2.a)
+Haz una tabla con las devianzas, grados de libertad, AIC, términos incluidos en cada modelo ajustado y tipo de independencia
+
+
+## Inciso 2.b)
+Escribe las hipótesis nula $(H_0)$ y alternativa $(H_A)$ del Análisis de Devianza que se muestra en la salida de `R`.
+
+## Inciso 2.c)
+Escribe la conclusión de la prueba de Análisis de Devianza para la que escribiste las hipótesis, incluyendo en tu conclusión si vale o no la pena la inclusión de la triple interacción en el modelo.
+
+## Inciso 2.d)
+Elige al mejor modelo justificando la elección en el AIC, devianzas, grados de libertad y parsimonia.
+
+## Inciso 2.e)
+¿El *mosaicplot* que elegiste apoya tu elección? Justifica tu respuesta.
