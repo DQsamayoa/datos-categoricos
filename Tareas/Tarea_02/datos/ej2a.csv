@@ -1,0 +1,8 @@
+modelo,devianza,gl,aic,terminos,tipo_indep
+A,171.04,7,253.25,A + B + C,Independencia mutua
+B,0,0,96.209,A * B * C,Modelo saturado
+C,122.98,5,209.19,C + A * B,Independencia Conjunta
+D,127.41,5,213.62,B + A * C,Independendia Conjunta
+E,74.325,6,158.53,A + B * C,Independeneia Conjunta
+F,2.0664,2,94.275,B*A + B*C + A*C,Asociación Homogénea
+G,79.352,3,169.56,B*A + A*C,Independencia condicional

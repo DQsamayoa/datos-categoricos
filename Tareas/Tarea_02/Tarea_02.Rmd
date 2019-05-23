@@ -87,16 +87,56 @@ anova(modelo1, modelo2, test = "Chisq") %>%
 ## Inciso 1.a)
 Escribe los modelos 1 y 2 con los valores de los coeficientes, indicando claramente los componentes aleatorio, sistemático y la función liga.
 
+Para el **modelo 1** se tienen los siguientes valores de los coeficientes:
+\begin{align*}
+\log (peces.capturados) &= 2.765474 - 0.013039*latitude + 0.122820*longitude + 0.047880*temperature,
+\end{align*}
+donde:
+
+- El componente aleatorio es la variable `peces.capturados` al corresponder al conteo de peces que han capturado $(y)$ en las diferentes estaciones de pezca. En este caso $y \sim Poisson(\mu)$.
+- El componente sistemático está dado por $\eta = \hat{\beta}_0 + \hat{\beta}_1 * latitude_i + \hat{\beta}_2 * longitude_i + \hat{\beta}_3 * temperature_i + \hat{\beta}_4 * depth$.
+- La función liga está dada por la función logaritmo $\log$, de tal forma que se cumple que $\log(\mu) = \eta$.
+
+Para el **modelo 2** se tienen los siguientes valores de los coeficientes:
+\begin{align*}
+\log (peces.capturados) &= -0.6384251 + 0.0681683*latitude + 0.0926485*longitude + 0.10447362*temperature - 0.0056388*depth,
+\end{align*}
+donde:
+
+- El componente aleatorio es la variable `peces.capturados` al corresponder al conteo de peces que han capturado $(y)$ en las diferentes estaciones de pezca. En este caso $y \sim Poisson(\mu)$.
+- El componente sistemático está dado por $\eta = \hat{\beta}_0 + \hat{\beta}_1 * latitude_i + \hat{\beta}_2 * longitude_i + \hat{\beta}_3 * temperature_i$.
+- La función liga está dada por la función logaritmo $\log$, de tal forma que se cumple que $\log(\mu) = \eta$.
+
 ## Inciso 1.b)
 Escribe las hipótesis nula $(H_0)$ y alternativa $(H_A)$ del Análisis de Devianza que se muestra en la salida de `R`.
+
+Considerando el modelo 1 de regresión Poisson con coeficientes $\beta_{10}, \beta_{11}, \beta_{12}, \beta_{13}$ y el modelo 2 de regresión de Poisson con coeficientes $\beta_{20}, \beta_{21}, \beta_{22}, \beta_{23}, \beta_{24}$. Entonces se tiene que la prueba de hipótesis para una función de devianza consiste en:
+\begin{align*}
+H_0 : \beta_{24} = 0 \qquad \text{vs.} \qquad H_1 : \beta{4} \neq 0
+\end{align*}
 
 ## Inciso 1.c)
 Escribe la conclusión de la prueba de Análisis de Devianza para la que escribiste las hipótesis, incluyendo en tu conclusión si vale o no la pena la inclusión de *"Depth"* (profundidad máxima) en el modelo.
 
+Del análisis previo se puede apreciar que la inclusión de la variable `depth` contribuye de manera significativa al modelo 2. Esto debido a que el AIC del segundo modelo es menor que del primero.
+
 ## Inciso 1.d)
 Interpreta los coeficientes del modelo 2.
 
+Del modelo 2, se tienen los siguientes coeficientes:
+\begin{align*}
+\log (peces.capturados) &= -0.6384251 + 0.0681683*latitude + 0.0926485*longitude + 0.10447362*temperature - 0.0056388*depth,
+\end{align*}
 
+En este caso, $\exp(\beta0) = `r exp(-0.6384251)`$ se puede interpretar como el nivel base de pesca. Esto es, si las otras variables explicativas fueran $0$.
+
+Para el coficiente de latitud se tendría $\exp(\beta_1) = `r exp(0.0681683)`$, quiere decir que si todas las demás variables se mantienen constantes, pero incrementamos en una unidad la latitud, entonces el conteo de bacalos capturados se incrementa en $`r exp(0.0681683)`$.
+
+Para el coficiente de longitud se tendría $\exp(\beta_2) = `r exp(0.0926485)`$, quiere decir que si todas las demás variables se mantienen constantes, pero incrementamos en una unidad la longitud, entonces el conteo de bacalos capturados se incrementa en $`r exp(0.0926485)`$.
+
+Para el coficiente de temperatura se tendría $\exp(\beta_3) = `r exp(0.10447362)`$, quiere decir que si todas las demás variables se mantienen constantes, pero incrementamos en una unidad la temperatura, entonces el conteo de bacalos capturados se incrementa en $`r exp(0.10447362)`$.
+
+Para el coficiente de profundidad se tendría $\exp(\beta_4) = `r exp(0.0056388)`$, quiere decir que si todas las demás variables se mantienen constantes, pero incrementamos en una unidad la profundida, entonces el conteo de bacalos capturados decrementa en $`r exp(0.0056388)`$.
 
 # Ejercicio 2
 En el archivo `encuesta.csv` se encuentran los conteos de una encuesta realizada en EU en donde se les preguntó a adultos si estaban de acuerdo con la distribución de condones a adolescentes (si condón/no condón) , si estaban de acuerdo con el sexo premarital (desacuerdo / acuerdo) y su posición política (liberal/demócrata/ repúblicano).
@@ -174,19 +214,55 @@ anova (modeloF, modeloB, test = "Chisq") %>%
                escape = FALSE, digits = 3)
 ```
 
-
 ## Inciso 2.a)
 Haz una tabla con las devianzas, grados de libertad, AIC, términos incluidos en cada modelo ajustado y tipo de independencia
+
+```{r, echo = FALSE}
+tabla <- read_csv("datos/ej2a.csv")
+```
+
+
+```{r, echo = FALSE}
+tabla %>% 
+  knitr::kable(format = "latex", booktabs = TRUE, longtable = TRUE, linesep = "",
+               escape = FALSE, digits = 3,
+               caption = "Tabla de devianzas (A = posición, B = condones, C = premarital)",
+               col.names = c("Modelo", "Devianza", "Grados de libertad", "AIC", "Términos", "Tipo de independencia")) %>% 
+  row_spec(0, align = "c") %>% 
+  kableExtra::kable_styling(latex_options = c("striped", "repeat_header"))
+```
 
 
 ## Inciso 2.b)
 Escribe las hipótesis nula $(H_0)$ y alternativa $(H_A)$ del Análisis de Devianza que se muestra en la salida de `R`.
 
+Considerando el modelo log-lineal dado por:
+\begin{align*}
+\log (\mu_{ijk}) &= \lambda + \lambda^X_i + \lambda^Y_j + \lambda^Z_k + \lambda^{XY}_{ij} + \lambda^{XZ}_{ik} + \lambda^{Y>}_{jk} + \lambda^{XYZ}_{ijk},
+\end{align*}
+el cual es un modelo saturado con mínima función de devianza.
+
+Si consideramos un segundo modelo con $p_1$ términos y un tercer modelo con $p_2$ términos, la prueba de hipótesis para la devianza estaría determinando el estadístico de la prueba $H_0: D^{\ast}_{p1} - D^{\ast}_{p2} \sim \chi^2_{p2 - p1}$. Con lo que se tendría la prueba de hipótesis para una función de devianza como:
+\begin{align*}
+H_0 : D^{\ast}_{p1} - D^{\ast}_{p2} \leqslant \chi^2_{p2 - p1} \qquad \text{vs.} \qquad H_A : D^{\ast}_{p1} - D^{\ast}_{p2} > \chi^2_{p2 - p1}
+\end{align*}
+para cualesquiera $p_1 < p2$.
+
 ## Inciso 2.c)
 Escribe la conclusión de la prueba de Análisis de Devianza para la que escribiste las hipótesis, incluyendo en tu conclusión si vale o no la pena la inclusión de la triple interacción en el modelo.
+
+Basado en la prueba de análisis de devianza, se determina que la inclusión de la triple interacción en el modelo no induce cambios significativos en la devianza. Esto se puede confirmar al observar el AIC del modelo de asociación homogénea, el cual ofrece la mayor reducción del AIC.
+
+Debio a que el modelo de asociación homogénea es más parsimonioso, se considera un mejor modelo que el de la triple interacción.
 
 ## Inciso 2.d)
 Elige al mejor modelo justificando la elección en el AIC, devianzas, grados de libertad y parsimonia.
 
+El mejor modelo es el F (de asociación homogénea), ya que ofrece el AIC menor y con menor número de grados de libertad, así como la mayor reducción de devianza comparado con el modelo sólo con intercepto.
+
+El modelos, además, es parsimonioso pues no incluye la triple interacción y por tanto se tiene un menor número de términos.
+
 ## Inciso 2.e)
 ¿El *mosaicplot* que elegiste apoya tu elección? Justifica tu respuesta.
+
+Observando el modelo con datos completos comparado con el modelo F de asociación homogénea, se aprecia que el ajsute es similar al de los datos originales sin sobreajuste. Por lo cual, se confirma la selección de modelo a traves del mosaicplot
